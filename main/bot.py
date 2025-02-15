@@ -10,7 +10,7 @@ TOKEN = os.getenv("DISCORD_TOKEN")
 
 # Check for possible error source
 if not TOKEN:
-    raise ValueError("DISCORD_TOKEN not found in .env file!")
+    raise ValueError("DISCORD_TOKEN not found")
 
 # Enable intents
 intents = discord.Intents.default()

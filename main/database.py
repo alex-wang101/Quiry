@@ -9,7 +9,7 @@ MONGO_URI = os.getenv("MONGO_URI")
 
 # Check for possible error source
 if not MONGO_URI:
-    raise ValueError("MONGO_URI not found in .env file! Please check your environment variables.")
+    raise ValueError("MONGO_URI not found")
 
 # Connect to MongoDB Atlas (Ensure it's NOT localhost)
 try:
