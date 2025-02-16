@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from database import store_message, fetch_messages
+from database import store_message
 
 # Load environment variables (the hidden stuff)
 load_dotenv()
