@@ -3,6 +3,7 @@ import discord
 from discord.ext import commands
 from dotenv import load_dotenv
 from database import store_message
+from retrieval import generate_response
 
 # Load environment variables (the hidden stuff)
 load_dotenv()
@@ -53,11 +54,14 @@ async def on_message(message):
     await bot.process_commands(message)
 
 # Fetches recent messages and searches for an answer.
-# (the actual command)
 @bot.tree.command(name="ask", description="Ask me anything about this server!")
 async def ask(interaction: discord.Interaction, question: str):
-    """
-    Reserved for AI prompt/TBD
-    """
+    server_id = interaction.guild.id
+    # Generate the response
+    response = generate_response(question, server_id) 
+    
+    # Once the response is ready send a follow-up
+    await interaction.response.send_message(response)
+
 
 bot.run(TOKEN)
