@@ -17,6 +17,9 @@ if not TOKEN:
 intents = discord.Intents.default()
 intents.message_content = True
 
+# Dictionary for spam detection
+last_messages = {}
+
 bot = commands.Bot(command_prefix='/', intents=intents)
 
 @bot.event
@@ -32,6 +35,18 @@ async def on_message(message):
     # Ignore messages from the bot itself or DMs to the bot
     if message.author == bot.user or not message.guild:
         return  
+
+    # If the same user sends an identical message within 10 seconds then the message gets ignored
+    current_time = message.created_at.timestamp()
+    user_id = message.author.id
+    if user_id in last_messages:
+        last_content, last_time = last_messages[user_id]
+        if message.content == last_content and (current_time - last_time) < 10:
+            # print(f"Ignoring spam message from {message.author}")
+            return
+        
+    # Update the last message record for the user
+    last_messages[user_id] = (message.content, current_time)
 
     # Discord channels don't need to be in a category so make sure it is in one, otherwise no category
     if message.channel.category:
