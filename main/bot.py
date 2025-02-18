@@ -2,7 +2,7 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv
-from database import store_message
+from database import store_message, get_server_db
 from retrieval import generate_response
 
 # Load environment variables (the hidden stuff)
@@ -78,5 +78,79 @@ async def ask(interaction: discord.Interaction, question: str):
     # Once the response is ready send a follow-up
     await interaction.response.send_message(response)
 
+# This function is for admins to clear messages from their servers database, in case of a reset of data, privacy reasons, or if spam is detected
+@bot.tree.command(name="clear", description="Clear X amount of recent messages from the database")
+async def clear(interaction: discord.Interaction, count: int):
+    # This command is for administrators only
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    server_id = interaction.guild.id
+    db = get_server_db(server_id)
+    collection = db["messages"]
+    
+    # Retrieve the most recent X messages (sorted by descending timestamp)
+    messages_to_delete = list(collection.find({}).sort("timestamp", -1).limit(count))
+    if not messages_to_delete:
+        await interaction.response.send_message("No messages found to clear.", ephemeral=True)
+        return
+    
+    # Get the _id values of the messages to delete
+    ids = [msg["_id"] for msg in messages_to_delete]
+    result = collection.delete_many({"_id": {"$in": ids}})
+    await interaction.response.send_message(f"Deleted {result.deleted_count} messages from the database.", ephemeral=True)
+
+
+# This function is for admins to get their bot started when its added to their server, so they have data already to make the bot work
+@bot.tree.command(name="fetch", description="Fetches past messages from this server to store in the database")
+async def fetch(interaction: discord.Interaction, count: int):
+    # This command is for administrators only
+    if not interaction.user.guild_permissions.administrator:
+        await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
+        return
+
+    # Defer the interaction to prevent expiration
+    await interaction.response.defer(ephemeral=True)
+
+    server_id = interaction.guild.id
+    fetched_count = 0
+
+    # Iterate through each text channel
+    for channel in interaction.guild.text_channels:
+        if fetched_count > count:
+            break
+        if channel.permissions_for(interaction.guild.me).read_message_history:
+            async for message in channel.history(limit=count):
+                if message.author.bot:
+                    fetched_count = fetched_count - 1
+                    continue
+                category = None
+                if message.channel.category:
+                    category = message.channel.category.name
+                else:
+                    category = "No Category"
+
+                store_message(
+                    server_id=server_id,
+                    author=str(message.author),
+                    user_id=message.author.id,
+                    content=message.content,
+                    category=category,
+                    channel=str(channel),
+                    server=str(interaction.guild.name)
+                )
+                fetched_count = fetched_count + 1
+                if fetched_count > count:
+                    break
+
+    await interaction.followup.send(f"Fetched and stored {fetched_count} historical messages.", ephemeral=True)
+
+
+# This is a simple function for people to get the invite link to Quiry more easily
+@bot.tree.command(name="invite", description="Get the bot's invite link!")
+async def invite(interaction: discord.Interaction):
+    invite_link = "https://discord.com/oauth2/authorize?client_id=1340139928994189322&permissions=8&integration_type=0&scope=bot"
+    await interaction.response.send_message(f"Invite me to your server using this link: {invite_link}")
 
 bot.run(TOKEN)

@@ -39,7 +39,7 @@ def generate_embedding(text):
 # Stores a message with vector embeddings in MongoDB.
 def store_message(server_id, author, user_id, content, category, channel, server):    
     if not content.strip():  
-        print("skipping message")
+        #print("skipping message")
         return  
 
     embedding = generate_embedding(content)  

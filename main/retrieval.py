@@ -38,7 +38,7 @@ def load_embeddings(server_id):
 
     # If no messages are found in the database, return None to indicate an empty index
     if not all_messages:
-        print("Sorry, no messages were found in the database for this server.")
+        #print("Sorry, no messages were found in the database for this server.")
         return None, None, None
 
     # Map vector embedding to strings
