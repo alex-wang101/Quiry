@@ -73,7 +73,10 @@ async def on_message(message):
 async def ask(interaction: discord.Interaction, question: str):
     server_id = interaction.guild.id
     # Generate the response
-    response = generate_response(question, server_id) 
+    try: 
+        response = generate_response(question, server_id) 
+    except:
+        response = "I'm sorry, but I couldn't generate a response for that question. Please try asking something else."
     
     # Once the response is ready send a follow-up
     await interaction.response.send_message(response)
