@@ -105,6 +105,8 @@ async def clear(interaction: discord.Interaction, count: int):
     await interaction.response.send_message(f"Deleted {result.deleted_count} messages from the database.", ephemeral=True)
 
 
+# Too many complications
+'''
 # This function is for admins to get their bot started when its added to their server, so they have data already to make the bot work
 @bot.tree.command(name="fetch", description="Fetches past messages from this server to store in the database")
 async def fetch(interaction: discord.Interaction, count: int):
@@ -155,5 +157,5 @@ async def fetch(interaction: discord.Interaction, count: int):
 async def invite(interaction: discord.Interaction):
     invite_link = "https://discord.com/oauth2/authorize?client_id=1340139928994189322&permissions=8&integration_type=0&scope=bot"
     await interaction.response.send_message(f"Invite me to your server using this link: {invite_link}")
-
+'''
 bot.run(TOKEN)
