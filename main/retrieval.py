@@ -122,13 +122,26 @@ def generate_response(query, server_id, top_k=5):
     else:
         context = "\n".join(relevant_chunks)
 
-    prompt = f"""You are a helpful, factual AI that is given a conversation log (context) and a user query. Your task is to find the answer to the query using the provided context. Follow these rules:
+    prompt = f"""If the user's query can be answered directly using the provided context, provide a precise and factual response.
 
-1. If the answer is clearly present in the context, provide a direct answer using the context. For example, if the user asks, "Who's mom bakes like a champion?" and the context includes a message where a user "pppravin" states, "my mom bakes like a champion," your answer should be "pppravin's mom bakes like a champion."
-2. If the context is unclear or does not contain the information required to answer the query, reply with: "I’m sorry, I cannot find that information."
-3. For any additional details requested by the user, provide a direct, concise answer based solely on the context.
-4. If the context includes flagged content (e.g., hate speech, harassment, or similar issues) that prevents you from generating a safe response, indicate which message is causing the error.
-5. When outputing a timestamp, only say the date not the hours, and output a reasonable estimation for the amount of time that has passed since the message.
+Example: If the user asks, "Who's mom bakes like a champion?" and the context includes a message where a user "pppravin" states, "my mom bakes like a champion," respond with:
+"pppravin's mom bakes like a champion."
+
+If the context does not contain sufficient information to answer the query, or if the context is ambiguous, respond with:
+"I’m sorry, I cannot find that information."
+
+For any additional details requested by the user, provide a short and direct answer based solely on the context. Avoid adding unnecessary information or speculation.
+
+If the context includes flagged content (e.g., hate speech, harassment, or similar issues) that prevents you from generating a safe response, indicate which message is causing the issue. For example:
+"I cannot respond due to flagged content in the message from [author] on [date]."
+
+When referencing a timestamp, only include the date (not the time). Additionally, provide a reasonable estimation of the time that has passed since the message. For example:
+
+If the message was sent on October 1, 2023, and today is October 5, 2023, say:
+"This message was sent 4 days ago."
+
+If the message was sent on September 25, 2023, and today is October 5, 2023, say:
+"This message was sent 10 days ago."
 
 Context:
 {context}
