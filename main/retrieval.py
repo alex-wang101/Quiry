@@ -79,6 +79,7 @@ def search_similar_messages(query, index, all_docs, text_map, top_k=5):
         def cosine_sim(query_vec, doc_vec):
             dot_val = sum(q*d for q, d in zip(query_vec, doc_vec))
             doc_norm = sqrt(sum(d*d for d in doc_vec))
+            #print(dot_val / (query_norm * doc_norm + 1e-9)
             return dot_val / (query_norm * doc_norm + 1e-9)
 
         scored_candidates = []
@@ -114,7 +115,8 @@ def generate_response(query, server_id, top_k=5):
 
     # Get the top_k chunks
     relevant_chunks = search_similar_messages(query, index, all_docs, text_map, top_k=top_k)
-
+    
+    #print(relevant_chunks)
     if not relevant_chunks:
         context = "No similar messages were found in the database."
     else:
