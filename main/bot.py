@@ -42,27 +42,25 @@ async def on_message(message):
     if user_id in last_messages:
         last_content, last_time = last_messages[user_id]
         if message.content == last_content and (current_time - last_time) < 10:
-            # print(f"Ignoring spam message from {message.author}")
             return
         
     # Update the last message record for the user
     last_messages[user_id] = (message.content, current_time)
 
     # Discord channels don't need to be in a category so make sure it is in one, otherwise no category
-    if message.channel.category:
-        category = message.channel.category.name
-    else:
-        category = "No Category"
+    category = message.channel.category.name if message.channel.category else "No Category"
 
-    # Defining the paramters to store the dataset
+    # Defining the parameters to store the dataset
+    # Pass the actual channel object here:
     store_message(
-        server_id=message.guild.id,  
+        server_id=message.guild.id,
         author=str(message.author),
         user_id=message.author.id,
         content=message.content,
         category=category,
-        channel=str(message.channel),
-        server=str(message.guild.name)
+        channel=message.channel,  # <-- pass channel object instead of string
+        server=str(message.guild.name),
+        timestamp=message.created_at
     )
 
     # Process commands
@@ -71,19 +69,18 @@ async def on_message(message):
 # Fetches recent messages and searches for an answer.
 @bot.tree.command(name="ask", description="Ask me anything about this server!")
 async def ask(interaction: discord.Interaction, question: str):
+    await interaction.response.defer()
+   
     server_id = interaction.guild.id
-    # Generate the response
-    try: 
-        response = generate_response(question, server_id) 
-    except:
-        response = "I'm sorry, but I couldn't generate a response for that question. Please try asking something else."
+    response = generate_response(question, server_id) 
     
     # Once the response is ready send a follow-up
-    await interaction.response.send_message(response)
+    await interaction.followup.send(response)
 
 # This function is for admins to clear messages from their servers database, in case of a reset of data, privacy reasons, or if spam is detected
 @bot.tree.command(name="clear", description="Clear X amount of recent messages from the database")
 async def clear(interaction: discord.Interaction, count: int):
+    await interaction.response.defer()
     # This command is for administrators only
     if not interaction.user.guild_permissions.administrator:
         await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
@@ -96,13 +93,18 @@ async def clear(interaction: discord.Interaction, count: int):
     # Retrieve the most recent X messages (sorted by descending timestamp)
     messages_to_delete = list(collection.find({}).sort("timestamp", -1).limit(count))
     if not messages_to_delete:
-        await interaction.response.send_message("No messages found to clear.", ephemeral=True)
+        await interaction.followup.send("No messages found to clear.", ephemeral=True)
         return
     
     # Get the _id values of the messages to delete
     ids = [msg["_id"] for msg in messages_to_delete]
     result = collection.delete_many({"_id": {"$in": ids}})
-    await interaction.response.send_message(f"Deleted {result.deleted_count} messages from the database.", ephemeral=True)
+    await interaction.followup.send(f"Deleted {result.deleted_count} messages from the database.", ephemeral=True)
+
+@bot.tree.command(name="invite", description="Get the bot's invite link!")
+async def invite(interaction: discord.Interaction):
+    invite_link = "https://discord.com/oauth2/authorize?client_id=1340139928994189322&permissions=8&integration_type=0&scope=bot"
+    await interaction.response.send_message(f"Invite me to your server using this link: {invite_link}")
 
 
 # Too many complications
@@ -150,12 +152,7 @@ async def fetch(interaction: discord.Interaction, count: int):
                     break
 
     await interaction.followup.send(f"Fetched and stored {fetched_count} historical messages.", ephemeral=True)
-
-
-# This is a simple function for people to get the invite link to Quiry more easily
-@bot.tree.command(name="invite", description="Get the bot's invite link!")
-async def invite(interaction: discord.Interaction):
-    invite_link = "https://discord.com/oauth2/authorize?client_id=1340139928994189322&permissions=8&integration_type=0&scope=bot"
-    await interaction.response.send_message(f"Invite me to your server using this link: {invite_link}")
 '''
+
+
 bot.run(TOKEN)
